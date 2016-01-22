@@ -1,5 +1,3 @@
-Simulation_phylometrics
-
 Simulates phylogenetic trees with varying degrees of tree prunning (=species richness), ages and diversification rates. 
 Uses the simulated phylogenies to calculate the following phylometrics:
 
