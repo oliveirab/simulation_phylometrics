@@ -1,7 +1,7 @@
 
 ################################################################
 #### Simulate phylogenetic trees and calculate phylometrics
-#### Brunno Oliveira, 2014
+#### Brunno Oliveira, 2016
 #### Universidade Federal do Rio Grande do Norte - Brasil
 #### Stony Brook University - USA
 ################################################################
@@ -34,7 +34,9 @@ library(apTreeshape)
 library(plyr)
 library(TreeSim)
 
-rm(list=ls())
+setwd("/home/brunno/Dropbox/Doutorado Brunno/Manuscritos/Chap1 Age and FD/TreeSim/GitHub_simulation_phylometrics")
+
+#### Load functions:
 
 ### Function range data between zero and one
 range01 <- function(x){(x-min(x))/(max(x)-min(x))}
@@ -65,23 +67,15 @@ MRD.b <- function(phy)
   return(mrd)
 }
 
+#### Simulate phylogenetic trees:
+
+# 1) Manipulate richness:
+
 # Phyvars
 phyvars <- c("SPD","PD","age","MRD","MRD.time","ED","ED2","RBL",
-       "DR","MPD","MNTD","PSV","GAM","IMY","IMP","DivRate","DivRate2")
+             "DR","MPD","MNTD","PSV","GAM","IMY","IMP","DivRate","DivRate2")
 
-#### Set WD
-setwd('/home/brunno/Dropbox/Doutorado Brunno/Manuscritos/Chap1 Age and FD/TreeSim')
 
-#### load image
-load("simTree.RData")
-
-################################################################
-
-#### SIMULATE PHYLOGENETIC TREES
-
-################################################################
-
-# 1) EFFECT OF SPECIES RICHNESS
 # We supose that the greater amount of prunning in a phylogenetic tree greater the greater 
 # probability of the resulting tree be composed by species with deep evolutionary relationships. 
 # Conversely, lower levels of tree prunning is likely to comprise more complete clades'
@@ -120,7 +114,7 @@ colnames(model1)<-c("age","run",phyvars)
 # Sample the tree to obtain assemblages with different richness
 for(i in 1:N){
   
-  cat("\r",i,"of", N)
+  #cat("\r",i,"of", N)
   
   k<- as.integer(sample(n,1,replace = T)) #n species
   
@@ -176,8 +170,7 @@ for(i in 1:N){
 }
 
 
-################################################################
-# 2) EFFECT OF TIME
+# 2) Manipulate time (age):
 
 # set parameters
 ages <- rnorm(1000, 100, 20)
@@ -194,7 +187,7 @@ colnames(model2)<-c("age","run",phyvars)
 
 # Simulate N trees under a uniform birth-death process
 for(i in 1:N){
-  cat("\r",i,"of", N)
+  #cat("\r",i,"of", N)
   time<-tsamp[i]
   trx <- sim.bd.taxa.age(n=100, numbsim=1, lambda=log(n/2)/time, mu=0, age=time, mrca=TRUE)
   trx <- trx[[1]]
@@ -211,7 +204,7 @@ for(i in 1:N){
   
   # get ED for each species
   spp.ED <- evol.distinct(trx, type = c("fair.proportion"), ### Species evolutionary distinctiveness (ED)
-              scale = TRUE, use.branch.lengths = TRUE)
+                          scale = TRUE, use.branch.lengths = TRUE)
   
   # needed for MPD, MNTD and PSV  
   h<-data.frame(rep(1,length(trx$tip.label)))
@@ -224,7 +217,7 @@ for(i in 1:N){
   model2$MPD[i] <- mpd(h,cophenetic(trx)) ### Mean phylogenetic distance (MPD)
   model2$MNTD[i] <- mntd(h,cophenetic(trx)) ### Mean nearest taxon distance (MNTD)
   model2$PSV[i] <- psv.b(h,trx) ### Phylogenetic species variability (PSV)
-
+  
   model2$MRD[i] <- MRD.b(trx) ### Mean root distance (MRD)  The mean number of nodes that separating species from the root of their tree. 
   model2$MRD.time[i] <- mean(max(branching.times(trx))-spp.ages$age) ### Mean root distance (MRD.time)  How far from the base of the tree species arise.
   
@@ -240,11 +233,10 @@ for(i in 1:N){
   model2$IMY[i] <- colless(as.treeshape(trx),norm="yule") ### Colless Yule model (IMY) 
   model2$IMP[i] <- colless(as.treeshape(trx),norm="pda") ### Colless PDA model (IMP) 
   model2$age[i] <- time
-  }
+}
 
 
-################################################################
-# 3) EFFECT OF DIVERSIFICATION RATES
+# 3) Manipulate diversification rate:
 
 # set parameters
 lamb = rexp(10000, rate=2)
@@ -265,7 +257,7 @@ colnames(model3)<-c("age","run",phyvars)
 rate<-rep(NA,N)
 for(i in 1:N){
   
-  cat("\r",i,"of", N)
+  #cat("\r",i,"of", N)
   ts<-tsamp[i]
   trx <- sim.bd.taxa.age(n=100, numbsim=1, lambda=ts, mu=0.14, age=40, mrca=TRUE) # change mu to 0.14
   trx <- trx[[1]]
@@ -275,16 +267,16 @@ for(i in 1:N){
   colnames(spp.ages)<-c("Species","age")
   max<-max(branching.times(trx))
   for (j in 1:length(trx$tip.label)){
-  Spp<-trx$tip.label[j]
-  spp.ages$age[j] <- trx$edge.length[which.edge(trx,Spp)]
-  spp.ages$Species[j]<-Spp
+    Spp<-trx$tip.label[j]
+    spp.ages$age[j] <- trx$edge.length[which.edge(trx,Spp)]
+    spp.ages$Species[j]<-Spp
   }
   
   # get ED for each species
   spp.ED <- evol.distinct(trx, type = c("fair.proportion"), ### Species' evolutionary distinctiveness
-              scale = TRUE, use.branch.lengths = TRUE)
+                          scale = TRUE, use.branch.lengths = TRUE)
   
-    
+  
   h<-data.frame(rep(1,length(trx$tip.label)))
   rownames(h)<-trx$tip.label
   h<-t(h)
@@ -316,7 +308,7 @@ for(i in 1:N){
 }
 
 
-#### Create table of results
+#### Table of results:
 
 #p-values
 results1<-data.frame(matrix(data=NA,nrow=length(phyvars),ncol=3))
@@ -330,10 +322,10 @@ models_files<-list(model1,model2,model3)
 
 for(j in 1:length(models)){
   for(i in 1:length(phyvars)){
-  x<-as.numeric(models_files[[j]][paste(models[j])][[1]])
-  y<-as.numeric(models_files[[j]][paste(phyvars[i])][[1]])
-  test <- cor.test(x,y,method="spearman")
-  results1[i,j]<-ifelse(round(test$p.value,3)<0.001,"<0.001",paste(round(test$p.value,3)))
+    x<-as.numeric(models_files[[j]][paste(models[j])][[1]])
+    y<-as.numeric(models_files[[j]][paste(phyvars[i])][[1]])
+    test <- cor.test(x,y,method="spearman")
+    results1[i,j]<-ifelse(round(test$p.value,3)<0.001,"<0.001",paste(round(test$p.value,3)))
   }
 }
 
@@ -347,18 +339,17 @@ models_files<-list(model1,model2,model3)
 
 for(j in 1:length(models)){
   for(i in 1:length(phyvars)){
-  x<-as.numeric(models_files[[j]][paste(models[j])][[1]])
-  y<-as.numeric(models_files[[j]][paste(phyvars[i])][[1]])
-  test <- cor.test(x,y,method='spearman')
-  results2[i,j]<-round(test$estimate,2)
+    x<-as.numeric(models_files[[j]][paste(models[j])][[1]])
+    y<-as.numeric(models_files[[j]][paste(phyvars[i])][[1]])
+    test <- cor.test(x,y,method='spearman')
+    results2[i,j]<-round(test$estimate,2)
   }
 }
 
 results<-data.frame(results2[,1],results1[,1],results2[,2],results1[,2],results2[,3],results1[,3])
 rownames(results)<-rownames(results1)
-colnames(results)<-c("Richness Pearson's R","Richness P","Time Pearson's R","Time P","Div. Rates Pearson's R","Div. Rates P")
+colnames(results)<-c("Richness - rho","Richness - P-value","Time - rho","Time - P-value","Div. Rate - rho","Div. Rate - P-value")
 
-View(results)
 
 write.table(results,"results_spearman.csv",sep=",")
 

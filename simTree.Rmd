@@ -26,6 +26,7 @@ toc: yes
 
 *** 
 
+
 \newpage
 
 1. Packages versions:
@@ -42,46 +43,17 @@ library(ape)
 library(TreeSim)
 library(picante)
 library(reshape)
-library(diversitree)
 library(e1071)
 library(phytools)
 library(apTreeshape)
 library(plyr)
 library(TreeSim)
+library(knitr)
 ```
 
-```{r, echo=F}
-#### Set WD
-setwd('/home/brunno/Dropbox/Doutorado Brunno/Manuscritos/Chap1 Age and FD/TreeSim')
-```
-
-2. List of phylometrics:
+2. Load functions:
 ===============================
-Phylogenetic diversity (PD)  Sum of all branch lengths in a tree.	Faith (1992)
-
-Mean phylogenetic distance (MPD)	Mean of phylogenetic distances between all species pairs within a tree.	Webb (2000)
-
-Mean nearest taxon distance (MNTD)	Mean phylogenetic distance between each species and its nearest neighbor in a tree.	Webb (2000)
-
-Phylogenetic species variability (PSV)	Expected variance among species in a neutrally evolving trait.	Helmus et al. (2007) 
-
-Mean root distance (MRD)	The mean number of nodes that separating species from the root of their tree. Alternatively, when time trees are available MRD can be calculated as the mean distance between each species nodes and the root of its phylogenetic tree (MRD.time). 	Kerr and Currie (1999); Hawkins et al. (2012)
-
-Species evolutionary distinctiveness (ED)  After dividing each branch length by the number of species subtending that branch, the obtained values are summed across all branches from which a species descends.  	Redding and Mooers (2006); Isaac et al. (2007)
-
-Species-level diversification rate (DivRate)	Inverse of the evolutionary distinctness (ED). Species rapidly diversifying will have short edge lengths shared among many species.	Jetz et al. (2012), Kembel et al. (2010)
-
-Relative branch length (RBL)	Approximates time between speciation events across a tree by calculating the mean ((stem age – crown age) / crown age).	Marin and Blair, In prep.
-
-Diversification rates (DR)	Species accumulation through time (log(clade diversity)/clade age).	Magallon and Sanderson (2001); Nee (2001); Phillimore et al. (2006)
-
-Gamma statistics (GAM)	The distribution of branching events throughout the tree. This phylometric distinguished between trees with relatively long inter-nodal distances towards the tips (tippy trees) and trees with relatively longer inter-nodal distances towards the root of the phylogeny (stemmy trees). 	Pybus and Harvey (2000)
-
-Colless	Measures the degree of tree imbalance. Here, we calculated standardized values of Colless according to the Yule and PDA models.	Colless (1982)
-
-3. Load functions:
-===============================
-```{r info,message=FALSE,echo=F}
+```{r}
 ### Function range data between zero and one
 range01 <- function(x){(x-min(x))/(max(x)-min(x))}
 
@@ -112,11 +84,36 @@ MRD.b <- function(phy)
 }
 ```
 
+2. List of phylometrics:
+===============================
+Phylogenetic diversity (PD)  Sum of all branch lengths in a tree.	Faith (1992)
+
+Mean phylogenetic distance (MPD)	Mean of phylogenetic distances between all species pairs within a tree.	Webb (2000)
+
+Mean nearest taxon distance (MNTD)	Mean phylogenetic distance between each species and its nearest neighbor in a tree.	Webb (2000)
+
+Phylogenetic species variability (PSV)	Expected variance among species in a neutrally evolving trait.	Helmus et al. (2007) 
+
+Mean root distance (MRD)	The mean number of nodes that separating species from the root of their tree. Alternatively, when time trees are available MRD can be calculated as the mean distance between each species nodes and the root of its phylogenetic tree (MRD.time). 	Kerr and Currie (1999); Hawkins et al. (2012)
+
+Species evolutionary distinctiveness (ED)  After dividing each branch length by the number of species subtending that branch, the obtained values are summed across all branches from which a species descends.  	Redding and Mooers (2006); Isaac et al. (2007)
+
+Species-level diversification rate (DivRate)	Inverse of the evolutionary distinctness (ED). Species rapidly diversifying will have short edge lengths shared among many species.	Jetz et al. (2012), Kembel et al. (2010)
+
+Relative branch length (RBL)	Approximates time between speciation events across a tree by calculating the mean ((stem age – crown age) / crown age).	Marin and Blair, In prep.
+
+Diversification rates (DR)	Species accumulation through time (log(clade diversity)/clade age).	Magallon and Sanderson (2001); Nee (2001); Phillimore et al. (2006)
+
+Gamma statistics (GAM)	The distribution of branching events throughout the tree. This phylometric distinguished between trees with relatively long inter-nodal distances towards the tips (tippy trees) and trees with relatively longer inter-nodal distances towards the root of the phylogeny (stemmy trees). 	Pybus and Harvey (2000)
+
+Colless	Measures the degree of tree imbalance. Here, we calculated standardized values of Colless according to the Yule and PDA models.	Colless (1982)
+
+
 4. Simulate phylogenetic trees:
 ===============================
 4.1. Manipulate richness:
 ----------------
-```{r}
+```{r sim1, error=F}
 # Phyvars
 phyvars <- c("SPD","PD","age","MRD","MRD.time","ED","ED2","RBL",
        "DR","MPD","MNTD","PSV","GAM","IMY","IMP","DivRate","DivRate2")
@@ -218,7 +215,7 @@ for(i in 1:N){
 
 4.2. Manipulate time (age):
 ----------------
-```{r}
+```{r sim2, error=F}
 # set parameters
 ages <- rnorm(1000, 100, 20)
 N <- 5000 # number of simulation
@@ -285,7 +282,7 @@ for(i in 1:N){
 
 4.3. Manipulate diversification rate:
 ----------------
-```{r}
+```{r sim3, error=F}
 # set parameters
 lamb = rexp(10000, rate=2)
 lamb = range01(lamb)
@@ -357,9 +354,9 @@ for(i in 1:N){
 ```
 
 
-5. Create table of results:
+5. Table of results:
 ===============================
-```{r, echo=F}
+```{r include = F}
 #p-values
 results1<-data.frame(matrix(data=NA,nrow=length(phyvars),ncol=3))
 colnames(results1)<-c("Richness","Tree Depth","Div. Rates")
@@ -401,30 +398,11 @@ rownames(results)<-rownames(results1)
 colnames(results)<-c("Richness - rho","Richness - P-value","Time - rho","Time - P-value","Div. Rate - rho","Div. Rate - P-value")
 ```
 
-
-```{r, echo = F}
-rmarkdownTable <- function(df){
-  cat(paste(names(df), collapse = "|"))
-  cat("\n")
-  cat(paste(rep("-", ncol(df)), collapse = "|"))
-  cat("\n")
-
-  for(i in 1:nrow(df)){
-    cat(paste(df[i,], collapse = "|"))
-    cat("\n")
-    }
-invisible(NULL)
-}
-```
-
 Statistical relationship between examined phylometrics, species richness, time and diversification rate, used in the simulations. Relationships are reported as Spearman’s rank correlations.
 ```{r}
-rmarkdownTable(results)
+kable(results, format = "markdown")
 ```
 
-```{r, echo=F}
-write.table(results,"results_spearman.csv",sep=",")
 
-save.image("simTree.RData")
-```
-
+Please cite the original publication.  
+Contact brunno.oliveira@me.com for any further information.
