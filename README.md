@@ -1,4 +1,9 @@
 Simulates phylogenetic trees with varying degrees of tree prunning (=species richness), ages and diversification rates. 
+
+1. For the pdf version of Supporting Information click [here](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.pdf)    
+2. For access to the [source code](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.R)  
+
+
 Uses the simulated phylogenies to calculate the following phylometrics:
 
 - Phylogenetic diversity (PD)  Sum of all branch lengths in a tree.	Faith (1992)
@@ -14,8 +19,6 @@ Uses the simulated phylogenies to calculate the following phylometrics:
 - Colless	Measures the degree of tree imbalance. Here, we calculated standardized values of Colless according to the Yule and PDA models.	Colless (1982)
 
 
-1. For the pdf version of Supporting Information click [here](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.pdf)    
-2. For access to the [source code](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.R)  
 
 
 ***
