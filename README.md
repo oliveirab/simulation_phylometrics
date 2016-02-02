@@ -13,3 +13,12 @@ Uses the simulated phylogenies to calculate the following phylometrics:
 - Gamma statistics (GAM)	The distribution of branching events throughout the tree. This phylometric distinguished between trees with relatively long inter-nodal distances towards the tips (tippy trees) and trees with relatively longer inter-nodal distances towards the root of the phylogeny (stemmy trees). 	Pybus and Harvey (2000)
 - Colless	Measures the degree of tree imbalance. Here, we calculated standardized values of Colless according to the Yule and PDA models.	Colless (1982)
 
+
+1. For the pdf version of Supporting Information click [here](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.pdf)    
+2. For access to the [source code](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.R)  
+
+
+***
+Contact brunno.oliveira@me.com for any further information.  
+
+* This repository follows the principles of reproducible research ([Peng, 2011](http://www.sciencemag.org/content/334/6060/1226)).
