@@ -2,6 +2,7 @@ Simulates phylogenetic trees with varying degrees of tree prunning (=species ric
 
 1. For the pdf version of Supporting Information click [here](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.pdf)    
 2. For access to the [source code](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.R)  
+3. For access the code to calculate phylometric click [here](https://github.com/oliveirab/simulation_phylometrics/blob/master/phylometrics_function.R)
 
 
 Uses the simulated phylogenies to calculate the following phylometrics:
