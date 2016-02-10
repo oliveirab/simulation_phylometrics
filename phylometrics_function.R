@@ -1,3 +1,12 @@
+
+################################################################
+#### Simulate phylogenetic trees and calculate phylometrics
+#### Brunno Oliveira, 2016
+#### Universidade Federal do Rio Grande do Norte - Brasil
+#### Stony Brook University - USA
+#### Contact brunno.oliveira@me.com for any information.
+################################################################
+
 phylometrics <- function(phy){
   
   if(!is.element('picante', installed.packages()[,1])) { stop("Package not found. Install picante") }
