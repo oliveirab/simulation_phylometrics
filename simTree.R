@@ -4,6 +4,7 @@
 #### Brunno Oliveira, 2016
 #### Universidade Federal do Rio Grande do Norte - Brasil
 #### Stony Brook University - USA
+#### Contact brunno.oliveira@me.com for any information.
 ################################################################
 
 #### List of phylometrics
@@ -41,39 +42,17 @@ setwd("/home/brunno/Dropbox/Doutorado Brunno/Manuscritos/Chap1 Age and FD/TreeSi
 ### Function range data between zero and one
 range01 <- function(x){(x-min(x))/(max(x)-min(x))}
 
-### PSV function by Brunno Oliveira
-# Modified from psv function in {picante}
-psv.b<-function (samp, tree) {
-  Cmatrix <- vcv.phylo(tree, corr = F)
-  SR <- rowSums(data.frame(samp))
-  nlocations <- 1
-  nspecies <- length(tree$tip.label)
-  index <- seq(1:nrow(Cmatrix))
-  n <- length(index)
-  C <- Cmatrix[index, index]
-  PSV <- (n * sum(diag(as.matrix(C))) - sum(C))/(n * (n - 1))
-  PSV
-}
-
-### MRD function by Brunno Oliveira
-# Modified from ELIOT MILLER (avaible at http://www.umsl.edu/~emmq7/Menu/Rphylo/MRD.R)
-MRD.b <- function(phy) 
-{
-  phylo.bl1 <- compute.brlen(phy, 1)
-  all.dist <- dist.nodes(phylo.bl1)
-  root.dist <- all.dist[length(phy$tip.label)+1, 1:length(phy$tip.label)]
-  tips.to.root <- data.frame(tipnames=phy$tip.label,root.dist)
-  mrd <- mean(tips.to.root$root.dist)
-  return(mrd)
-}
+### phylometrics function
+source("phylometrics_function.R")
 
 #### Simulate phylogenetic trees:
 
 # 1) Manipulate richness:
 
 # Phyvars
-phyvars <- c("SPD","PD","age","MRD","MRD.time","ED","ED2","RBL",
-             "DR","MPD","MNTD","PSV","GAM","IMY","IMP","DivRate","DivRate2")
+phyvars <- c("SR","PD","MRD","MRD.time","ED","RBL",
+             "DR","MPD","MNTD","PSV","GAM","IMY","IMP","DivRate",
+             "maxage", "ED2", "DivRate2", "Sp.Ages2")
 
 
 # We supose that the greater amount of prunning in a phylogenetic tree greater the greater 
@@ -84,13 +63,13 @@ phyvars <- c("SPD","PD","age","MRD","MRD.time","ED","ED2","RBL",
 # tree prunning (species richness).
 
 # set parameters
-N <- 5000 # number of simulations
+N <- 50 # number of simulations
 n <- rnorm(10000,mean=100,sd=38) # number of taxa (tips) * Parameters taken from the observed distribution of species richness values considering 1x1 degree resolution worldwide gridded data for mammals.
 n = n+(-1*min(n))
 n = n +10 # We consider that it is better to have at least 10 species to calculate phymetrics.
 
 # Simulate a tree in parameters to the actual mammalian tree (Hedges et al., 2015)
-trxs <- sim.bd.taxa.age(n=5000, numbsim=1, lambda=0.2, mu=0.14, age=180, mrca=T)
+trxs <- sim.bd.taxa.age(n=500, numbsim=1, lambda=0.2, mu=0.14, age=180, mrca=T)
 trxs <- trxs[[1]]
 
 # get ED for species
@@ -101,140 +80,100 @@ spp.ED <- evol.distinct(trxs, type = c("fair.proportion"), ### Species' evolutio
 spp.ages.c<-data.frame(matrix(data=NA,nrow=length(trxs$tip.label),ncol=2))
 colnames(spp.ages.c)<-c("Species","age")
 max<-max(branching.times(trxs))
+
 for (j in 1:length(trxs$tip.label)){
   Spp<-trxs$tip.label[j]
   spp.ages.c$age[j] <- trxs$edge.length[which.edge(trxs,Spp)]
   spp.ages.c$Species[j]<-Spp
 }
 
-# Create table for storing results
-model1<-data.frame(matrix(data=NA,nrow=N,ncol=length(phyvars)+2))
-colnames(model1)<-c("age","run",phyvars)
 
 # Sample the tree to obtain assemblages with different richness
-for(i in 1:N){
-  
-  #cat("\r",i,"of", N)
+for(i in 1:N) {  cat("\r",i,"of", N)
   
   k<- as.integer(sample(n,1,replace = T)) #n species
   
   trx<-drop.tip(trxs,sample(1:5000,5000-k)) # sample tips to obtain assemblages of n tips
   
-  # get age for each species (pruned tree)
-  spp.ages.p<-data.frame(matrix(data=NA,nrow=length(trx$tip.label),ncol=2))
-  colnames(spp.ages.p)<-c("Species","age")
-  max<-max(branching.times(trx))
-  for (j in 1:length(trx$tip.label)){
-    Spp<-trx$tip.label[j]
-    spp.ages.p$age[j] <- trx$edge.length[which.edge(trx,Spp)]
-    spp.ages.p$Species[j]<-Spp
-  }
-  
   subED<-subset(spp.ED,Species%in%trx$tip.label)
   subAge<-subset(spp.ages.c,Species%in%trx$tip.label)
   
-  h<-data.frame(rep(1,length(trx$tip.label)))
-  rownames(h)<-trx$tip.label
-  h<-t(h)
+  run <- i
   
-  model1$run[i] <- i
-  model1$SPD[i] <- length(trx$tip.label) ### Species richness
-  model1$PD[i] <- sum(trx$edge.length) ### Phylogenetic diversity (PD)
-  model1$MPD[i] <- mpd(h,cophenetic(trx)) ### Mean phylogenetic distance (MPD)
-  model1$MNTD[i] <- mntd(h,cophenetic(trx)) ### Mean nearest taxon distance (MNTD)
-  model1$PSV[i] <- psv.b(h,trx) ### Phylogenetic species variability (PSV)
+  ### Manipulated parameter
+  par <- length(trx$tip.label)
   
-  model1$MRD[i] <- MRD.b(trx) ### Mean root distance (MRD)  The mean number of nodes that separating species from the root of their tree. 
-  model1$MRD.time[i] <- mean(max(branching.times(trx))-spp.ages.p$age) ### Mean root distance (MRD.time)  How far from the base of the tree species arise.
+  ### Species ages (Sp.Ages2) Subset the resulting vector
+  Sp.Ages2 <- mean(subAge[,2])
   
-  ### Species evolutionary distinctiveness (ED) 
-  #1) Prune the tree first and then pass the tree in
-  model1$ED[i] <- mean(evol.distinct(trx, type = c("fair.proportion"), scale = TRUE, use.branch.lengths = TRUE)[,2]) ## Pruned tree
-  #2) Subset the resulting vector
-  model1$ED2[i] <- mean(subED[,2])
+  ### Species evolutionary distinctiveness (ED2) Subset the resulting vector
+  ED2 <- mean(subED[,2])
   
-  ### Species-level diversification rate (DivRate)
-  #1) Prune the tree first and then pass the tree in
-  model1$DivRate[i] <- 1/model1$ED[i] 
-  #2) Subset the resulting vector
-  model1$DivRate2[i] <- mean(1/subED[,2])
+  ### Species-level diversification rate (DivRate) Subset the resulting vector
+  DivRate2 <- mean(1/subED[,2])
   
-  model1$RBL[i] <- mean(trx$edge.length/(as.numeric(branching.times(trx)[1]))) ### Relative branch length (RBL)
+  ### calculate phylometrics
+  phylo.res <- phylometrics(trx)
   
-  model1$DR[i] <- log(model1$SPD[i])/max(branching.times(trx)) ### Diversification rates (DR)
-  model1$GAM[i] <- gamStat(branching.times(trx),return.list=FALSE) ### Gamma statistics (GAM)  
-  model1$IMY[i] <- colless(as.treeshape(trx),norm="yule") ### Colless Yule model (IMY) 
-  model1$IMP[i] <- colless(as.treeshape(trx),norm="pda") ### Colless PDA model (IMP) 
-  
-  model1$age[i] <- max(branching.times(trx)) ### max lineage age 
+  ### save
+  if(i==1){
+    model1 <- c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2)
+  }
+  else{
+    model1 <- rbind(model1, 
+                    c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2))
+  }
 }
 
+model1 <- data.frame(model1)
 
 # 2) Manipulate time (age):
 
 # set parameters
 ages <- rnorm(1000, 100, 20)
-N <- 5000 # number of simulation
+N <- 50 # number of simulation
 n <- 100 # number of taxa (tips)
 
 # sample ages
 tsamp<-sample(ages,N,replace = T)
 
-# Create table for storing results
-model2<-data.frame(matrix(data=NA,nrow=N,ncol=length(phyvars)+2))
-colnames(model2)<-c("age","run",phyvars)
-
-
 # Simulate N trees under a uniform birth-death process
-for(i in 1:N){
-  #cat("\r",i,"of", N)
+for(i in 1:N){ cat("\r",i,"of", N)
   time<-tsamp[i]
   trx <- sim.bd.taxa.age(n=100, numbsim=1, lambda=log(n/2)/time, mu=0, age=time, mrca=TRUE)
   trx <- trx[[1]]
   
-  # get age for each species
-  spp.ages<-data.frame(matrix(data=NA,nrow=length(trx$tip.label),ncol=2))
-  colnames(spp.ages)<-c("Species","age")
-  max<-max(branching.times(trx))
-  for (j in 1:length(trx$tip.label)){
-    Spp<-trx$tip.label[j]
-    spp.ages$age[j] <- trx$edge.length[which.edge(trx,Spp)]
-    spp.ages$Species[j]<-Spp
+  subED<-subset(spp.ED,Species%in%trx$tip.label)
+  subAge<-subset(spp.ages.c,Species%in%trx$tip.label)
+  
+  run <- i
+  
+  ### Manipulated parameter
+  par <- time
+  
+  ### Species ages (Sp.Ages2) Subset the resulting vector
+  Sp.Ages2 <- NA
+  
+  ### Species evolutionary distinctiveness (ED2) Subset the resulting vector
+  ED2 <- NA
+  
+  ### Species-level diversification rate (DivRate) Subset the resulting vector
+  DivRate2 <- NA
+  
+  ### calculate phylometrics
+  phylo.res <- phylometrics(trx)
+  
+  ### save
+  if(i==1){
+    model2 <- c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2)
   }
-  
-  # get ED for each species
-  spp.ED <- evol.distinct(trx, type = c("fair.proportion"), ### Species evolutionary distinctiveness (ED)
-                          scale = TRUE, use.branch.lengths = TRUE)
-  
-  # needed for MPD, MNTD and PSV  
-  h<-data.frame(rep(1,length(trx$tip.label)))
-  rownames(h)<-trx$tip.label
-  h<-t(h)
-  
-  model2$run[i] <- i
-  model2$SPD[i] <- length(trx$tip.label) ### Species richness
-  model2$PD[i] <- sum(trx$edge.length) ### Phylogenetic diversity (PD)
-  model2$MPD[i] <- mpd(h,cophenetic(trx)) ### Mean phylogenetic distance (MPD)
-  model2$MNTD[i] <- mntd(h,cophenetic(trx)) ### Mean nearest taxon distance (MNTD)
-  model2$PSV[i] <- psv.b(h,trx) ### Phylogenetic species variability (PSV)
-  
-  model2$MRD[i] <- MRD.b(trx) ### Mean root distance (MRD)  The mean number of nodes that separating species from the root of their tree. 
-  model2$MRD.time[i] <- mean(max(branching.times(trx))-spp.ages$age) ### Mean root distance (MRD.time)  How far from the base of the tree species arise.
-  
-  model2$ED[i] <- mean(spp.ED[,2]) ### Species evolutionary distinctiveness (ED) 
-  model2$ED2[i] <- mean(spp.ED[,2]) ### Needed to repeat - matching tables of results
-  model2$DivRate[i] <- mean(1/spp.ED[,2]) ### Species-level diversification rate (DivRate)
-  model2$DivRate2[i] <- mean(1/spp.ED[,2]) ### Needed to repeat - matching tables of results
-  
-  model2$RBL[i] <- mean(trx$edge.length/(as.numeric(branching.times(trx)[1])))  ### Relative branch length (RBL)
-  
-  model2$DR[i] <- log(model2$SPD[i])/time ### Diversification rates (DR)
-  model2$GAM[i] <- gamStat(branching.times(trx),return.list=FALSE) ### Gamma statistics (GAM)  
-  model2$IMY[i] <- colless(as.treeshape(trx),norm="yule") ### Colless Yule model (IMY) 
-  model2$IMP[i] <- colless(as.treeshape(trx),norm="pda") ### Colless PDA model (IMP) 
-  model2$age[i] <- time
+  else{
+    model2 <- rbind(model2, 
+                    c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2))
+  }
 }
 
+model2 <- data.frame(model2)
 
 # 3) Manipulate diversification rate:
 
@@ -242,7 +181,7 @@ for(i in 1:N){
 lamb = rexp(10000, rate=2)
 lamb = range01(lamb)
 lamb = lamb+0.0001
-N <- 5000 # number of simulation
+N <- 50 # number of simulation
 n <- 100 # number of taxa (tips)
 
 #simulate div values
@@ -254,58 +193,44 @@ colnames(model3)<-c("age","run",phyvars)
 
 # Simulate N trees under a uniform birth-death process
 
-rate<-rep(NA,N)
-for(i in 1:N){
+for(i in 1:N){ cat("\r",i,"of", N)
   
-  #cat("\r",i,"of", N)
   ts<-tsamp[i]
   trx <- sim.bd.taxa.age(n=100, numbsim=1, lambda=ts, mu=0.14, age=40, mrca=TRUE) # change mu to 0.14
   trx <- trx[[1]]
   
-  # get age for species
-  spp.ages<-data.frame(matrix(data=NA,nrow=length(trx$tip.label),ncol=2))
-  colnames(spp.ages)<-c("Species","age")
-  max<-max(branching.times(trx))
-  for (j in 1:length(trx$tip.label)){
-    Spp<-trx$tip.label[j]
-    spp.ages$age[j] <- trx$edge.length[which.edge(trx,Spp)]
-    spp.ages$Species[j]<-Spp
+  subED<-subset(spp.ED,Species%in%trx$tip.label)
+  subAge<-subset(spp.ages.c,Species%in%trx$tip.label)
+  
+  run <- i
+  
+  ### Manipulated parameter
+  par <- ts
+  
+  ### Species ages (Sp.Ages2) Subset the resulting vector
+  Sp.Ages2 <- NA
+  
+  ### Species evolutionary distinctiveness (ED2) Subset the resulting vector
+  ED2 <- NA
+  
+  ### Species-level diversification rate (DivRate) Subset the resulting vector
+  DivRate2 <- NA
+  
+  ### calculate phylometrics
+  phylo.res <- phylometrics(trx)
+  
+  ### save
+  if(i==1){
+    model3 <- c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2)
   }
-  
-  # get ED for each species
-  spp.ED <- evol.distinct(trx, type = c("fair.proportion"), ### Species' evolutionary distinctiveness
-                          scale = TRUE, use.branch.lengths = TRUE)
-  
-  
-  h<-data.frame(rep(1,length(trx$tip.label)))
-  rownames(h)<-trx$tip.label
-  h<-t(h)
-  
-  rate[i] <- ts
-  model3$run[i] <- i
-  model3$SPD[i] <- length(trx$tip.label) ### Species richness
-  model3$PD[i] <- sum(trx$edge.length) ### Phylogenetic diversity (PD)
-  model3$MPD[i] <- mpd(h,cophenetic(trx)) ### Mean phylogenetic distance (MPD)
-  model3$MNTD[i] <- mntd(h,cophenetic(trx))  ### Mean nearest taxon distance (MNTD)
-  model3$PSV[i] <- psv.b(h,trx) ### Phylogenetic species variability (PSV)
-  
-  model3$MRD[i] <- MRD.b(trx) ### Mean root distance (MRD)  The mean number of nodes that separating species from the root of their tree. 
-  model3$MRD.time[i] <- mean(max(branching.times(trx))-spp.ages$age) ### Mean root distance (MRD.time)  How far from the base of the tree species arise.
-  
-  model3$ED[i] <- mean(spp.ED[,2]) ### Species evolutionary distinctiveness (ED) 
-  model3$ED2[i] <- mean(spp.ED[,2]) ### Needed to repeat - matching tables of results
-  model3$DivRate[i] <- mean(1/spp.ED[,2]) ### Species-level diversification rate (DivRate)
-  model3$DivRate2[i] <- mean(1/spp.ED[,2]) ### Needed to repeat - matching tables of results
-  
-  model3$RBL[i] <- mean(trx$edge.length/(as.numeric(branching.times(trx)[1]))) ### Relative branch length (RBL)
-  
-  model3$DR[i] <- log(model3$SPD[i])/max(branching.times(trx)) ### Diversification rates (DR)
-  model3$GAM[i] <- gamStat(branching.times(trx),return.list=FALSE) ### Gamma statistics (GAM)  
-  model3$IMY[i] <- colless(as.treeshape(trx),norm="yule") ### Colless Yule model (IMY) 
-  model3$IMP[i] <- colless(as.treeshape(trx),norm="pda") ### Colless PDA model (IMP) 
-  
-  model3$age[i] <- as.numeric(branching.times(trx)[1]) ### max lineage age 
+  else{
+    model3 <- rbind(model3, 
+                    c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2))
+  }
 }
+
+model3 <- data.frame(model3)
+
 
 
 #### Table of results:
@@ -315,16 +240,13 @@ results1<-data.frame(matrix(data=NA,nrow=length(phyvars),ncol=3))
 colnames(results1)<-c("Richness","Tree Depth","Div. Rates")
 rownames(results1)<-phyvars
 
-model3<-cbind(model3,lamb=rate)
-
-models<-c("SPD","age","lamb")
 models_files<-list(model1,model2,model3)
 
-for(j in 1:length(models)){
+for(j in 1:length(models_files)){
   for(i in 1:length(phyvars)){
-    x<-as.numeric(models_files[[j]][paste(models[j])][[1]])
+    x<-as.numeric(models_files[[j]]$par)
     y<-as.numeric(models_files[[j]][paste(phyvars[i])][[1]])
-    test <- cor.test(x,y,method="spearman")
+    test <- cor.test(x,y,method="spearman", exact=FALSE)
     results1[i,j]<-ifelse(round(test$p.value,3)<0.001,"<0.001",paste(round(test$p.value,3)))
   }
 }
@@ -334,12 +256,9 @@ results2<-data.frame(matrix(data=NA,nrow=length(phyvars),ncol=3))
 colnames(results2)<-c("Richness","Tree Depth","Div. Rates")
 rownames(results2)<-phyvars
 
-models<-c("SPD","age","lamb")
-models_files<-list(model1,model2,model3)
-
-for(j in 1:length(models)){
+for(j in 1:length(models_files)){
   for(i in 1:length(phyvars)){
-    x<-as.numeric(models_files[[j]][paste(models[j])][[1]])
+    x<-as.numeric(models_files[[j]]$par)
     y<-as.numeric(models_files[[j]][paste(phyvars[i])][[1]])
     test <- cor.test(x,y,method='spearman')
     results2[i,j]<-round(test$estimate,2)
@@ -349,7 +268,7 @@ for(j in 1:length(models)){
 results<-data.frame(results2[,1],results1[,1],results2[,2],results1[,2],results2[,3],results1[,3])
 rownames(results)<-rownames(results1)
 colnames(results)<-c("Richness - rho","Richness - P-value","Time - rho","Time - P-value","Div. Rate - rho","Div. Rate - P-value")
-
+results <- results[-1,]
 
 write.table(results,"results_spearman.csv",sep=",")
 
