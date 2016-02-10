@@ -1,11 +1,11 @@
-Simulates phylogenetic trees with varying degrees of tree prunning (=species richness), ages and diversification rates. 
+Simulates phylogenetic trees with varying degrees of tree prunning (=species richness), ages and diversification rates,  and calculate phylometrics.
 
 1. For the pdf version of Supporting Information click [here](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.pdf)    
 2. For access to the [source code](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.R)  
-3. For access the code to calculate phylometric click [here](https://github.com/oliveirab/simulation_phylometrics/blob/master/phylometrics_function.R)
+3. For access the code to calculate phylometrics click [here](https://github.com/oliveirab/simulation_phylometrics/blob/master/phylometrics_function.R)
 
 
-Uses the simulated phylogenies to calculate the following phylometrics:
+List of phylometrics:
 
 - Phylogenetic diversity (PD)  Sum of all branch lengths in a tree.	Faith (1992)
 - Mean phylogenetic distance (MPD)	Mean of phylogenetic distances between all species pairs within a tree.	Webb (2000)
