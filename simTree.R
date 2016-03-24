@@ -49,38 +49,31 @@ source("phylometrics_function.R")
 
 # 1) Manipulate richness:
 
-# Phyvars
-phyvars <- c("SR","PD","MRD","MRD.time","ED","RBL",
-             "DR","MPD","MNTD","PSV","GAM","IMY","IMP","DivRate",
-             "maxage", "ED2", "DivRate2", "Sp.Ages2")
-
-
-# We supose that the greater amount of prunning in a phylogenetic tree greater the greater 
-# probability of the resulting tree be composed by species with deep evolutionary relationships. 
-# Conversely, lower levels of tree prunning is likely to comprise more complete clades'
-# histories and concentrate nodes towards the tips (high div and young assemblages). 
-# The objective here is to find a phylometric that is not affected by the level of 
-# tree prunning (species richness).
-
-# set parameters
-N <- 50 # number of simulations
-n <- rnorm(10000,mean=100,sd=38) # number of taxa (tips) * Parameters taken from the observed distribution of species richness values considering 1x1 degree resolution worldwide gridded data for mammals.
+### set parameter
+# number of simulations
+N <- 5000 
+# number of taxa (tips) * Taken from the observed distribution of species 
+# richness values considering 1x1 degree resolution worldwide gridded data 
+# for mammals.
+n <- rnorm(10000,mean=100,sd=38) 
 n = n+(-1*min(n))
-n = n +10 # We consider that it is better to have at least 10 species to calculate phymetrics.
+# We consider that it is better to have at least 10 species to calculate phymetrics.
+n = n +10 
 
 # Simulate a tree in parameters to the actual mammalian tree (Hedges et al., 2015)
-trxs <- sim.bd.taxa.age(n=500, numbsim=1, lambda=0.2, mu=0.14, age=180, mrca=T)
+trxs <- sim.bd.taxa.age(n=5000, numbsim=1, lambda=0.2, mu=0.14, age=180, mrca=T)
 trxs <- trxs[[1]]
 
-# get ED for species
-spp.ED <- evol.distinct(trxs, type = c("fair.proportion"), ### Species' evolutionary distinctiveness
+# Species' evolutionary distinctiveness: Calculate for the complete tree then 
+# use it to subset the resulting vector
+spp.ED <- evol.distinct(trxs, type = c("fair.proportion"), 
                         scale = TRUE, use.branch.lengths = TRUE)
 
-# get age for each species (complete tree)
+# Species' ages: Calculate for the complete tree tha use it to subset the
+# resulting vector
 spp.ages.c<-data.frame(matrix(data=NA,nrow=length(trxs$tip.label),ncol=2))
 colnames(spp.ages.c)<-c("Species","age")
 max<-max(branching.times(trxs))
-
 for (j in 1:length(trxs$tip.label)){
   Spp<-trxs$tip.label[j]
   spp.ages.c$age[j] <- trxs$edge.length[which.edge(trxs,Spp)]
@@ -89,11 +82,12 @@ for (j in 1:length(trxs$tip.label)){
 
 
 # Sample the tree to obtain assemblages with different richness
-for(i in 1:N) {  cat("\r",i,"of", N)
+for(i in 1:N) {  #cat("\r",i,"of", N)
   
-  k<- as.integer(sample(n,1,replace = T)) #n species
+  k<- as.integer(sample(n,1,replace = F)) #n species
   
-  trx<-drop.tip(trxs,sample(1:5000,5000-k)) # sample tips to obtain assemblages of n tips
+  trx<-drop.tip(trxs,sample(1:5000,5000-k)) # sample tips to obtain 
+  # assemblages of n tips
   
   subED<-subset(spp.ED,Species%in%trx$tip.label)
   subAge<-subset(spp.ages.c,Species%in%trx$tip.label)
@@ -106,22 +100,24 @@ for(i in 1:N) {  cat("\r",i,"of", N)
   ### Species ages (Sp.Ages2) Subset the resulting vector
   Sp.Ages2 <- mean(subAge[,2])
   
-  ### Species evolutionary distinctiveness (ED2) Subset the resulting vector
+  ### Species evolutionary distinctiveness (ED2): Subset the resulting vector
   ED2 <- mean(subED[,2])
   
-  ### Species-level diversification rate (DivRate) Subset the resulting vector
+  ### Species-level diversification rate (DivRate): Subset the resulting vector
   DivRate2 <- mean(1/subED[,2])
   
   ### calculate phylometrics
   phylo.res <- phylometrics(trx)
   
-  ### save
+  ### store results
   if(i==1){
-    model1 <- c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2)
+    model1 <- c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2,
+                Sp.Ages2=Sp.Ages2)
   }
   else{
     model1 <- rbind(model1, 
-                    c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2))
+                    c(run=run, par=par, phylo.res, ED2=ED2, 
+                      DivRate2=DivRate2, Sp.Ages2=Sp.Ages2))
   }
 }
 
@@ -130,15 +126,15 @@ model1 <- data.frame(model1)
 # 2) Manipulate time (age):
 
 # set parameters
-ages <- rnorm(1000, 100, 20)
-N <- 50 # number of simulation
+ages <- rnorm(10000, 100, 20)
+N <- 5000 # number of simulation
 n <- 100 # number of taxa (tips)
 
 # sample ages
-tsamp<-sample(ages,N,replace = T)
+tsamp<-sample(ages,N,replace = F)
 
 # Simulate N trees under a uniform birth-death process
-for(i in 1:N){ cat("\r",i,"of", N)
+for(i in 1:N){ #cat("\r",i,"of", N)
   time<-tsamp[i]
   trx <- sim.bd.taxa.age(n=100, numbsim=1, lambda=log(n/2)/time, mu=0, age=time, mrca=TRUE)
   trx <- trx[[1]]
@@ -154,22 +150,26 @@ for(i in 1:N){ cat("\r",i,"of", N)
   ### Species ages (Sp.Ages2) Subset the resulting vector
   Sp.Ages2 <- NA
   
-  ### Species evolutionary distinctiveness (ED2) Subset the resulting vector
+  ### Species evolutionary distinctiveness (ED2): Subset the resulting vector
   ED2 <- NA
   
-  ### Species-level diversification rate (DivRate) Subset the resulting vector
+  ### Species-level diversification rate (DivRate): Subset the resulting vector
   DivRate2 <- NA
   
   ### calculate phylometrics
   phylo.res <- phylometrics(trx)
   
-  ### save
+  ### store results
   if(i==1){
-    model2 <- c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2)
+    model2 <- c(run=run, par=par, phylo.res, ED2=as.numeric(phylo.res["ED"]),
+                DivRate2=as.numeric(phylo.res["DivRate"]),
+                Sp.Ages2=as.numeric(phylo.res["Sp.Ages"]))
   }
   else{
     model2 <- rbind(model2, 
-                    c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2))
+                    c(run=run, par=par, phylo.res, ED2=as.numeric(phylo.res["ED"]), 
+                      DivRate2=as.numeric(phylo.res["DivRate"]),
+                      Sp.Ages2=as.numeric(phylo.res["Sp.Ages"])))
   }
 }
 
@@ -181,22 +181,18 @@ model2 <- data.frame(model2)
 lamb = rexp(10000, rate=2)
 lamb = range01(lamb)
 lamb = lamb+0.0001
-N <- 50 # number of simulation
+N <- 5000 # number of simulation
 n <- 100 # number of taxa (tips)
 
 #simulate div values
-tsamp=sample(lamb,N,replace = T)
-
-# Create table for storing results
-model3<-data.frame(matrix(data=NA,nrow=N,ncol=length(phyvars)+2))
-colnames(model3)<-c("age","run",phyvars)
+tsamp=sample(lamb,N,replace = F)
 
 # Simulate N trees under a uniform birth-death process
 
-for(i in 1:N){ cat("\r",i,"of", N)
+for(i in 1:N){ #cat("\r",i,"of", N)
   
   ts<-tsamp[i]
-  trx <- sim.bd.taxa.age(n=100, numbsim=1, lambda=ts, mu=0.14, age=40, mrca=TRUE) # change mu to 0.14
+  trx <- sim.bd.taxa.age(n=100, numbsim=1, lambda=ts, mu=0.14, age=40, mrca=TRUE)
   trx <- trx[[1]]
   
   subED<-subset(spp.ED,Species%in%trx$tip.label)
@@ -207,25 +203,29 @@ for(i in 1:N){ cat("\r",i,"of", N)
   ### Manipulated parameter
   par <- ts
   
-  ### Species ages (Sp.Ages2) Subset the resulting vector
+  ### Species ages (Sp.Ages2): Subset the resulting vector
   Sp.Ages2 <- NA
   
-  ### Species evolutionary distinctiveness (ED2) Subset the resulting vector
+  ### Species evolutionary distinctiveness (ED2): Subset the resulting vector
   ED2 <- NA
   
-  ### Species-level diversification rate (DivRate) Subset the resulting vector
+  ### Species-level diversification rate (DivRate): Subset the resulting vector
   DivRate2 <- NA
   
   ### calculate phylometrics
   phylo.res <- phylometrics(trx)
   
-  ### save
+  ### store results
   if(i==1){
-    model3 <- c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2)
+    model3 <- c(run=run, par=par, phylo.res, ED2=as.numeric(phylo.res["ED"]),
+                DivRate2=as.numeric(phylo.res["DivRate"]),
+                Sp.Ages2=as.numeric(phylo.res["Sp.Ages"]))
   }
   else{
     model3 <- rbind(model3, 
-                    c(run=run, par=par, phylo.res, ED2=ED2, DivRate2=DivRate2, Sp.Ages2=Sp.Ages2))
+                    c(run=run, par=par, phylo.res, ED2=as.numeric(phylo.res["ED"]), 
+                      DivRate2=as.numeric(phylo.res["DivRate"]),
+                      Sp.Ages2=as.numeric(phylo.res["Sp.Ages"])))
   }
 }
 
@@ -234,6 +234,11 @@ model3 <- data.frame(model3)
 
 
 #### Table of results:
+
+# Phyvars
+phyvars <- c("SR","PD","MRD","MRD.time","ED","RBL",
+             "DR","MPD","MNTD","PSV","GAM","IMY","IMP","DivRate",
+             "maxage", "ED2", "DivRate2", "Sp.Ages2")
 
 #p-values
 results1<-data.frame(matrix(data=NA,nrow=length(phyvars),ncol=3))
