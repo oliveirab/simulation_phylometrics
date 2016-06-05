@@ -1,4 +1,4 @@
-Simulates phylogenetic trees with varying degrees of tree prunning (=species richness), ages and diversification rates,  and calculate phylometrics.
+Simulate phylogenetic trees with varying degrees of tree prunning (=species richness), age and diversification rate,  and calculate phylometrics.
 
 1. For the pdf version of Supporting Information click [here](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.pdf)    
 2. For access to the [source code](https://github.com/oliveirab/simulation_phylometrics/blob/master/simTree.R)  
